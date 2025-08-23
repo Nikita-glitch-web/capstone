@@ -12,53 +12,65 @@ interface AuthResponse {
   lastName: string;
   gender: string;
   image: string;
-  token: string;
+  accessToken: string;
+  refreshToken: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private _token = signal<string | null>(null);
-  isLoggedIn = computed(() => !!this._token());
+  private _accessToken = signal<string | null>(null);
+  private _refreshToken = signal<string | null>(null);
+
+  // зручно мати реактивні computed
+  isLoggedIn = computed(() => !!this._accessToken());
+  accessToken = this._accessToken;
+  refreshToken = this._refreshToken;
 
   constructor(private http: HttpClient) {
     if (typeof window !== 'undefined' && window.localStorage) {
-      const token = localStorage.getItem('token');
-      this._token.set(token);
+      const storedAccess = localStorage.getItem('accessToken');
+      const storedRefresh = localStorage.getItem('refreshToken');
+      this._accessToken.set(storedAccess);
+      this._refreshToken.set(storedRefresh);
     }
   }
 
-  // Для інтерцептора та UI
   getToken(): string | null {
-    return this._token();
+    return this._accessToken();
   }
 
-  token = this._token;
+ login(username: string, password: string): Observable<AuthResponse> {
+  const body = {
+    username: (username || 'emilys').trim(),
+    password: (password || 'emilyspass').trim(),
+    expiresInMins: 60,
+  };
 
-  login(username: string, password: string): Observable<AuthResponse> {
-    // Використовуємо demo credentials, якщо порожні
-    const body = {
-      username: username || 'kminchelle',
-      password: password || '0lelplR'
-    };
-
-    return this.http
-      .post<AuthResponse>('https://dummyjson.com/auth/login', body, {
-        headers: { 'Content-Type': 'application/json' },
-      })
-      .pipe(
-        tap((res) => {
-          if (res.token) {
-            localStorage.setItem('token', res.token);
-            this._token.set(res.token);
+  return this.http
+    .post<AuthResponse>('https://dummyjson.com/auth/login', body, {
+      headers: { 'Content-Type': 'application/json' }, 
+    })
+    .pipe(
+      tap((res) => {
+        if (res?.accessToken) {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.setItem('accessToken', res.accessToken);
+            localStorage.setItem('refreshToken', res.refreshToken);
           }
-        })
-      );
-  }
+          this._accessToken.set(res.accessToken);
+          this._refreshToken.set(res.refreshToken);
+        }
+      })
+    );
+}
+
 
   logout(): void {
     if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.removeItem('token');
-      this._token.set(null);
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
     }
+    this._accessToken.set(null);
+    this._refreshToken.set(null);
   }
 }

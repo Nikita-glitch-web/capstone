@@ -52,13 +52,13 @@ export class LoginComponent {
     this.auth.login(username, password).subscribe({
       next: () => {
         this.loading.set(false);
-        this.router.navigate(['/items']); 
+        this.router.navigate(['/items']);
       },
       error: (err) => {
         this.loading.set(false);
         if (err?.status === 400) {
           this.error.set(
-            'Invalid username or password. Use demo: kminchelle / 0lelplR'
+            'Invalid username or password.'
           );
         } else {
           this.error.set(err?.error?.message || 'Login failed');

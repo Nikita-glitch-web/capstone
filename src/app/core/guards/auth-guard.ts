@@ -1,13 +1,15 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { CanActivate, CanLoad, Route, UrlSegment, Router } from '@angular/router';
 import { AuthService } from '../../features/auth/services/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthGuard implements CanActivate, CanLoad {
-  constructor(private auth: AuthService, private router: Router) {}
+  private auth = inject(AuthService);
+  private router = inject(Router);
 
   private checkLogin(): boolean {
-    if (this.auth.isLoggedIn()) { // викликаємо signal як функцію
+    // Викликаємо signal як функцію
+    if (this.auth.isLoggedIn()) {
       return true;
     }
     this.router.navigate(['/auth']); // редірект на login сторінку

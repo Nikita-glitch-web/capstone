@@ -12,6 +12,33 @@ export const appRoutes: Routes = [
     loadComponent: () =>
       import('./features/items/items.page').then(m => m.ItemsPage),
     canActivate: [AuthGuard],
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'list',
+      },
+      {
+        path: 'list',
+        loadComponent: () =>
+          import('./features/items/pages/list.page').then(m => m.ListPage),
+      },
+      {
+        path: 'add',
+        loadComponent: () =>
+          import('./features/items/pages/edit.page').then(m => m.EditPage),
+      },
+      {
+        path: 'edit/:id',
+        loadComponent: () =>
+          import('./features/items/pages/edit.page').then(m => m.EditPage),
+      },
+      {
+        path: ':id',
+        loadComponent: () =>
+          import('./features/items/pages/details.page').then(m => m.DetailsPage),
+      },
+    ],
   },
   {
     path: 'settings',
@@ -19,6 +46,13 @@ export const appRoutes: Routes = [
       import('./features/settings/settings.page').then(m => m.SettingsPage),
     canActivate: [AuthGuard],
   },
-  { path: '', pathMatch: 'full', redirectTo: 'auth' },
-  { path: '**', redirectTo: 'auth' },
+  {
+    path: '',
+    pathMatch: 'full',
+    redirectTo: 'auth',
+  },
+  {
+    path: '**',
+    redirectTo: 'auth',
+  },
 ];

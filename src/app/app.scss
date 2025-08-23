@@ -1,1 +1,39 @@
-.spacer { flex: 1 1 auto; }
+.sidenav-container {
+  height: 100%;
+}
+
+.app-sidenav {
+  width: 200px;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.content {
+  padding: 16px;
+}
+
+.menu-button {
+  display: none;
+}
+
+@media (max-width: 959px) {
+  .mat-toolbar {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .menu-button {
+    display: inline-flex;
+    margin-right: 8px;
+  }
+
+  table.mat-table {
+    font-size: 12px;
+
+    .mat-cell, .mat-header-cell {
+      padding: 4px 8px;
+    }
+  }
+}

@@ -1,9 +1,26 @@
-<mat-toolbar color="primary">
-  <span>Capstone</span>
-  <span class="spacer"></span>
-  <a mat-button routerLink="/items">Items</a>
-  <a mat-button routerLink="/settings">Settings</a>
-  <a mat-button routerLink="/auth">Login</a>
-</mat-toolbar>
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #sidenav mode="side" [opened]="isSidenavOpened" class="app-sidenav">
+    <nav>
+      <a mat-list-item routerLink="/items">Items</a>
+      <a mat-list-item routerLink="/settings">Settings</a>
+      <a mat-list-item routerLink="/auth">Login</a>
+    </nav>
+  </mat-sidenav>
 
-<router-outlet />
+  <mat-sidenav-content>
+    <mat-toolbar color="primary">
+      <button mat-icon-button (click)="sidenav.toggle()" class="menu-button">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <span>Capstone</span>
+      <span class="spacer"></span>
+      <mat-slide-toggle [checked]="isDarkTheme" (change)="toggleTheme($event.checked)">
+        Dark Mode
+      </mat-slide-toggle>
+    </mat-toolbar>
+
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

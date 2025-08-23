@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-items',
-  imports: [],
+  standalone: true,
+  imports: [RouterOutlet],
   templateUrl: './items.page.html',
-  styleUrl: './items.page.scss'
+  styleUrls: ['./items.page.scss'],
 })
-export class ItemsPage {
-
-}
+export class ItemsPage {}

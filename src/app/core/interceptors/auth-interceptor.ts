@@ -8,7 +8,13 @@ export const AuthInterceptor: HttpInterceptorFn = (
   next: HttpHandlerFn
 ): Observable<HttpEvent<any>> => {
   const auth = inject(AuthService);
-  const token = auth.token; // гетер token
+
+  // Не додаємо Authorization для login-запитів
+  if (req.url.includes('dummyjson.com/auth/login')) {
+    return next(req);
+  }
+
+  const token = auth.getToken();
 
   if (token) {
     req = req.clone({
