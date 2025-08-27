@@ -8,9 +8,9 @@ import { DetailsComponent } from '../components/details/details.component';
   standalone: true,
   imports: [CommonModule, MatButtonModule, DetailsComponent],
   template: `
-    <h1>Деталі товару</h1>
+    <h1>Details</h1>
     <app-details></app-details>
-    <button mat-button routerLink="/items">⬅ Назад</button>
+    <button mat-button routerLink="/items">Back</button>
   `
 })
 export class DetailsPage {}

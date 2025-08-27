@@ -9,7 +9,6 @@ export const AuthInterceptor: HttpInterceptorFn = (
 ): Observable<HttpEvent<any>> => {
   const auth = inject(AuthService);
 
-  // Не додаємо Authorization для login-запитів
   if (req.url.includes('dummyjson.com/auth/login')) {
     return next(req);
   }

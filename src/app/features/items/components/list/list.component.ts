@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -57,11 +57,23 @@ export class ListComponent implements OnInit, AfterViewInit {
   constructor(
     private itemsService: ItemsService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
-    this.itemsService.getCategories().subscribe(cats => this.categories = cats);
+    this.itemsService.getCategories().subscribe({
+      next: (cats) => {
+        this.categories = cats;
+
+        if (this.selectedCategory && !cats.includes(this.selectedCategory)) {
+          this.selectedCategory = null;
+        }
+
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Load categories failed:', err)
+    });
 
     this.searchControl.valueChanges
       .pipe(
@@ -87,34 +99,28 @@ export class ListComponent implements OnInit, AfterViewInit {
   }
 
   loadData() {
-  if (this.selectedCategory) {
-    this.itemsService
-      .getProductsByCategory(
-        this.selectedCategory,
-        this.pageSize,
-        this.pageIndex * this.pageSize,
-        this.searchTerm
-      )
-      .subscribe({
-        next: (res: ProductListResponse) => {
-          this.dataSource.data = res.products;
-          this.total = res.total;
-        },
-        error: (err) => console.error('Load products failed:', err)
-      });
-  } else {
-    this.itemsService
-      .getProducts(this.pageSize, this.pageIndex * this.pageSize, this.searchTerm)
-      .subscribe({
-        next: (res: ProductListResponse) => {
-          this.dataSource.data = res.products;
-          this.total = res.total;
-        },
-        error: (err) => console.error('Load products failed:', err)
-      });
-  }
-}
+    const req$ = this.selectedCategory
+      ? this.itemsService.getProductsByCategory(
+          this.selectedCategory,
+          this.pageSize,
+          this.pageIndex * this.pageSize,
+          this.searchTerm
+        )
+      : this.itemsService.getProducts(
+          this.pageSize,
+          this.pageIndex * this.pageSize,
+          this.searchTerm
+        );
 
+    req$.subscribe({
+      next: (res: ProductListResponse) => {
+        this.dataSource.data = res.products;
+        this.total = res.total;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Load products failed:', err)
+    });
+  }
 
   onPageChange(event: PageEvent) {
     this.pageIndex = event.pageIndex;
@@ -129,29 +135,30 @@ export class ListComponent implements OnInit, AfterViewInit {
   }
 
   delete(id: number) {
-  const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-    width: '400px',
-    data: {
-      title: 'Delete Product',
-      message: 'Are you sure you want to delete this product?',
-      confirmText: 'Delete',
-      cancelText: 'Cancel'
-    } as ConfirmDialogData
-  });
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: {
+        title: 'Delete Product',
+        message: 'Are you sure you want to delete this product?',
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
+      } as ConfirmDialogData
+    });
 
-  dialogRef.afterClosed().subscribe(result => {
-    if (result) {
-      this.itemsService.deleteProduct(id).subscribe({
-        next: () => {
-          this.snackBar.open('Product deleted', 'Close', { duration: 2000 });
-          this.loadData();
-        },
-        error: (err) => console.error(err)
-      });
-    }
-  });
-}
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.itemsService.deleteProduct(id).subscribe({
+          next: () => {
+            this.dataSource.data = this.dataSource.data.filter(p => p.id !== id);
+            this.total--;
 
+            this.snackBar.open('Product deleted', 'Close', { duration: 2000 });
+          },
+          error: (err) => console.error(err)
+        });
+      }
+    });
+  }
 
   openCreateDialog() {
     const dialogRef = this.dialog.open(EditComponent, {
@@ -159,8 +166,36 @@ export class ListComponent implements OnInit, AfterViewInit {
       data: null
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
+    dialogRef.afterClosed().subscribe((result: any) => {
+      if (!result) return;
+
+      if (typeof result === 'object' && result.id !== undefined) {
+        const saved: Product = result as Product;
+
+        const matchesCategory = !this.selectedCategory || this.selectedCategory === saved.category;
+        const searchLower = (this.searchTerm || '').toLowerCase();
+        const matchesSearch =
+          !searchLower ||
+          (saved.title && saved.title.toLowerCase().includes(searchLower)) ||
+          (saved.category && saved.category.toLowerCase().includes(searchLower));
+
+        if (matchesCategory && matchesSearch) {
+          const idx = this.dataSource.data.findIndex(p => p.id === saved.id);
+          if (idx > -1) {
+            const copy = [...this.dataSource.data];
+            copy[idx] = saved;
+            this.dataSource.data = copy;
+          } else {
+            this.dataSource.data = [saved, ...this.dataSource.data];
+            this.total++;
+          }
+        } else {
+          this.total++;
+        }
+
+        this.cdr.detectChanges();
+        this.snackBar.open('Product saved', 'Close', { duration: 2000 });
+      } else if (result === true) {
         this.loadData();
         this.snackBar.open('Product added', 'Close', { duration: 2000 });
       }

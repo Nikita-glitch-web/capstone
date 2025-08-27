@@ -5,6 +5,7 @@ import {
   FormGroup,
   Validators,
   ReactiveFormsModule,
+  FormControl,
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -15,6 +16,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { ItemsService, Product } from '../../services/items';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-edit',
@@ -49,6 +51,12 @@ export class EditComponent implements OnInit {
     'women-dresses',
   ];
 
+  ratingControl = new FormControl(0, [
+    Validators.required,
+    Validators.min(0),
+    Validators.max(5),
+  ]);
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -73,13 +81,17 @@ export class EditComponent implements OnInit {
       ],
       price: [0, [Validators.required, Validators.min(0)]],
       category: ['', Validators.required],
-      rating: [0, [Validators.required, Validators.min(0), Validators.max(5)]],
       stock: [0, [Validators.required, Validators.min(0)]],
     });
 
+    this.form.addControl('rating', this.ratingControl);
+
     if (this.isEdit && this.id !== undefined) {
       this.itemsService.getProduct(this.id).subscribe({
-        next: (product) => this.form.patchValue(product),
+        next: (product) => {
+          this.form.patchValue(product);
+          this.ratingControl.setValue(product.rating ?? 0);
+        },
         error: (err) => console.error('Load product failed:', err),
       });
     }
@@ -93,19 +105,25 @@ export class EditComponent implements OnInit {
 
     const productData: Partial<Product> = this.form.value;
 
-    const request$ = this.isEdit
-      ? this.itemsService.updateProduct(this.id!, productData)
-      : this.itemsService.createProduct(productData);
+    let request$: Observable<Product>;
+    if (this.isEdit) {
+      request$ = this.itemsService.updateProduct(this.id!, productData);
+    } else {
+      request$ = this.itemsService.createProduct(productData);
+    }
 
     request$.subscribe({
-      next: () => {
+      next: (saved: Product) => {
+        console.log('Saved product:', saved);
         if (this.dialogRef) {
-          this.dialogRef.close(true);
+          this.dialogRef.close(saved);
         } else {
           this.router.navigate(['/app/products']);
         }
       },
-      error: (err) => console.error('Save failed:', err),
+      error: (err) => {
+        console.error('Save failed:', err);
+      },
     });
   }
 

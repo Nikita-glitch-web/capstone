@@ -8,11 +8,10 @@ export class AuthGuard implements CanActivate, CanLoad {
   private router = inject(Router);
 
   private checkLogin(): boolean {
-    // Викликаємо signal як функцію
     if (this.auth.isLoggedIn()) {
       return true;
     }
-    this.router.navigate(['/auth']); // редірект на login сторінку
+    this.router.navigate(['/auth']);
     return false;
   }
 

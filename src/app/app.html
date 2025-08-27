@@ -1,19 +1,29 @@
 <mat-sidenav-container class="sidenav-container">
-  <mat-sidenav #sidenav mode="side" [opened]="isSidenavOpened" class="app-sidenav">
+  <mat-sidenav #sidenav mode="over" [opened]="false" *ngIf="isMobile" class="app-sidenav">
     <nav>
-      <a mat-list-item routerLink="/items">Items</a>
-      <a mat-list-item routerLink="/settings">Settings</a>
-      <a mat-list-item routerLink="/auth">Login</a>
+      <button mat-list-item routerLink="/items" *ngIf="auth.isLoggedIn()" (click)="closeSidenav()">Items</button>
+      <button mat-list-item routerLink="/settings" *ngIf="auth.isLoggedIn()" (click)="closeSidenav()">Settings</button>
+      <button mat-list-item routerLink="/auth/login" *ngIf="!auth.isLoggedIn()" (click)="closeSidenav()">Login</button>
+      <button mat-list-item (click)="auth.logout()" *ngIf="auth.isLoggedIn()" (click)="closeSidenav()">Logout</button>
     </nav>
   </mat-sidenav>
 
   <mat-sidenav-content>
     <mat-toolbar color="primary">
-      <button mat-icon-button (click)="sidenav.toggle()" class="menu-button">
+      <button *ngIf="isMobile" mat-icon-button (click)="sidenav.toggle()">
         <mat-icon>menu</mat-icon>
       </button>
-      <span>Capstone</span>
+
+      <span class="app-title">Capstone</span>
       <span class="spacer"></span>
+
+      <ng-container *ngIf="!isMobile">
+        <button mat-button routerLink="/items" *ngIf="auth.isLoggedIn()">Items</button>
+        <button mat-button routerLink="/settings" *ngIf="auth.isLoggedIn()">Settings</button>
+        <button mat-button routerLink="/auth/login" *ngIf="!auth.isLoggedIn()">Login</button>
+        <button mat-button (click)="auth.logout()" *ngIf="auth.isLoggedIn()">Logout</button>
+      </ng-container>
+
       <mat-slide-toggle [checked]="isDarkTheme" (change)="toggleTheme($event.checked)">
         Dark Mode
       </mat-slide-toggle>

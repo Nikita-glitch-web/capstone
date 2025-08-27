@@ -21,7 +21,6 @@ export class AuthService {
   private _accessToken = signal<string | null>(null);
   private _refreshToken = signal<string | null>(null);
 
-  // зручно мати реактивні computed
   isLoggedIn = computed(() => !!this._accessToken());
   accessToken = this._accessToken;
   refreshToken = this._refreshToken;
@@ -48,7 +47,7 @@ export class AuthService {
 
   return this.http
     .post<AuthResponse>('https://dummyjson.com/auth/login', body, {
-      headers: { 'Content-Type': 'application/json' }, 
+      headers: { 'Content-Type': 'application/json' },
     })
     .pipe(
       tap((res) => {
