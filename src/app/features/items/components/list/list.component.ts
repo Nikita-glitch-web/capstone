@@ -40,7 +40,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../confirm/confirm-di
 })
 export class ListComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['thumbnail', 'title', 'category', 'price', 'rating', 'stock', 'actions'];
-  dataSource = new MatTableDataSource<Product>();
+  dataSource = new MatTableDataSource<Product>([]);
   total = 0;
   pageSize = 10;
   pageIndex = 0;
@@ -65,21 +65,18 @@ export class ListComponent implements OnInit, AfterViewInit {
     this.itemsService.getCategories().subscribe({
       next: (cats) => {
         this.categories = cats;
-
         if (this.selectedCategory && !cats.includes(this.selectedCategory)) {
           this.selectedCategory = null;
         }
-
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Load categories failed:', err)
+      error: (err) => {
+        console.error('Load categories failed:', err);
+      }
     });
 
     this.searchControl.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged()
-      )
+      .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe(value => {
         this.searchTerm = value ?? '';
         this.pageIndex = 0;
@@ -90,35 +87,53 @@ export class ListComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    if (this.paginator) {
-      this.dataSource.paginator = this.paginator;
-    }
-    if (this.sort) {
-      this.dataSource.sort = this.sort;
-    }
+    if (this.paginator) this.dataSource.paginator = this.paginator;
+    if (this.sort) this.dataSource.sort = this.sort;
   }
 
   loadData() {
-    const req$ = this.selectedCategory
-      ? this.itemsService.getProductsByCategory(
-          this.selectedCategory,
-          this.pageSize,
-          this.pageIndex * this.pageSize,
-          this.searchTerm
-        )
-      : this.itemsService.getProducts(
-          this.pageSize,
-          this.pageIndex * this.pageSize,
-          this.searchTerm
-        );
+    if (this.selectedCategory) {
+      this.itemsService.getProductsByCategory(
+        this.selectedCategory,
+        this.pageSize,
+        this.pageIndex * this.pageSize
+      ).subscribe({
+        next: (res: ProductListResponse) => {
+          if (this.searchTerm) {
+            const searchLower = this.searchTerm.toLowerCase();
+            const filtered = res.products.filter(p =>
+              (p.title && p.title.toLowerCase().includes(searchLower)) ||
+              (p.category && p.category.toLowerCase().includes(searchLower)) ||
+              (p.description && p.description.toLowerCase().includes(searchLower))
+            );
+            this.dataSource.data = filtered;
+            this.total = filtered.length;
+          } else {
+            this.dataSource.data = res.products;
+            this.total = res.total;
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Load products by category failed:', err);
+        }
+      });
+      return;
+    }
 
-    req$.subscribe({
+    this.itemsService.getProducts(
+      this.pageSize,
+      this.pageIndex * this.pageSize,
+      this.searchTerm || undefined
+    ).subscribe({
       next: (res: ProductListResponse) => {
         this.dataSource.data = res.products;
         this.total = res.total;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Load products failed:', err)
+      error: (err) => {
+        console.error('Load products failed:', err);
+      }
     });
   }
 
@@ -150,9 +165,9 @@ export class ListComponent implements OnInit, AfterViewInit {
         this.itemsService.deleteProduct(id).subscribe({
           next: () => {
             this.dataSource.data = this.dataSource.data.filter(p => p.id !== id);
-            this.total--;
-
+            this.total = Math.max(0, this.total - 1);
             this.snackBar.open('Product deleted', 'Close', { duration: 2000 });
+            this.cdr.detectChanges();
           },
           error: (err) => console.error(err)
         });

@@ -1,6 +1,8 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { AuthService } from '../../auth/services/auth.service';
 
 export interface Product {
   id: number;
@@ -10,6 +12,7 @@ export interface Product {
   stock: number;
   category: string;
   thumbnail: string;
+  description?: string;
 }
 
 export interface ProductListResponse {
@@ -21,52 +24,101 @@ export interface ProductListResponse {
 
 @Injectable({ providedIn: 'root' })
 export class ItemsService {
+  private http = inject(HttpClient);
+  private auth = inject(AuthService);
+
   private readonly baseUrl = 'https://dummyjson.com/products';
 
-  constructor(private http: HttpClient) {}
+  private getAuthHeadersOrError(): HttpHeaders | Observable<never> {
+    const token = this.auth.getToken();
+    if (!token) {
+      return null as any;
+    }
+    return new HttpHeaders({ Authorization: `Bearer ${token}` });
+  }
 
   getProducts(limit: number = 10, skip: number = 0, q?: string): Observable<ProductListResponse> {
+    const token = this.auth.getToken();
+    if (!token) return throwError(() => new Error('Not authenticated'));
+
     let params = new HttpParams()
-      .set('limit', limit)
-      .set('skip', skip);
+      .set('limit', String(limit))
+      .set('skip', String(skip));
+
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
 
     if (q) {
       params = params.set('q', q);
-      return this.http.get<ProductListResponse>(`${this.baseUrl}/search`, { params });
+      return this.http
+        .get<ProductListResponse>(`${this.baseUrl}/search`, { params, headers })
+        .pipe(catchError(err => throwError(() => err)));
     }
 
-    return this.http.get<ProductListResponse>(this.baseUrl, { params });
+    return this.http
+      .get<ProductListResponse>(this.baseUrl, { params, headers })
+      .pipe(catchError(err => throwError(() => err)));
   }
-
   getProduct(id: number): Observable<Product> {
-    return this.http.get<Product>(`${this.baseUrl}/${id}`);
+    const token = this.auth.getToken();
+    if (!token) return throwError(() => new Error('Not authenticated'));
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+
+    return this.http
+      .get<Product>(`${this.baseUrl}/${id}`, { headers })
+      .pipe(catchError(err => throwError(() => err)));
   }
 
   createProduct(product: Partial<Product>): Observable<Product> {
-    return this.http.post<Product>(`${this.baseUrl}/add`, product);
+    const token = this.auth.getToken();
+    if (!token) return throwError(() => new Error('Not authenticated'));
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+
+    return this.http
+      .post<Product>(`${this.baseUrl}/add`, product, { headers })
+      .pipe(catchError(err => throwError(() => err)));
   }
 
   updateProduct(id: number, product: Partial<Product>): Observable<Product> {
-    return this.http.put<Product>(`${this.baseUrl}/${id}`, product);
+    const token = this.auth.getToken();
+    if (!token) return throwError(() => new Error('Not authenticated'));
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+
+    return this.http
+      .put<Product>(`${this.baseUrl}/${id}`, product, { headers })
+      .pipe(catchError(err => throwError(() => err)));
   }
 
   deleteProduct(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+    const token = this.auth.getToken();
+    if (!token) return throwError(() => new Error('Not authenticated'));
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+
+    return this.http
+      .delete<void>(`${this.baseUrl}/${id}`, { headers })
+      .pipe(catchError(err => throwError(() => err)));
   }
 
   getCategories(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.baseUrl}/categories`);
+    const token = this.auth.getToken();
+    if (!token) return throwError(() => new Error('Not authenticated'));
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+
+    return this.http
+      .get<string[]>(`${this.baseUrl}/categories`, { headers })
+      .pipe(catchError(err => throwError(() => err)));
   }
 
-  getProductsByCategory(category: string, limit: number = 10, skip: number = 0, q?: string): Observable<ProductListResponse> {
-    let params = new HttpParams()
-      .set('limit', limit)
-      .set('skip', skip);
+  getProductsByCategory(category: string, limit: number = 10, skip: number = 0): Observable<ProductListResponse> {
+    const token = this.auth.getToken();
+    if (!token) return throwError(() => new Error('Not authenticated'));
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
 
-    if (q) {
-      params = params.set('q', q);
-    }
+    const params = new HttpParams()
+      .set('limit', String(limit))
+      .set('skip', String(skip));
 
-    return this.http.get<ProductListResponse>(`${this.baseUrl}/category/${category}${q ? '/search' : ''}`, { params });
+    return this.http
+      .get<ProductListResponse>(`${this.baseUrl}/category/${encodeURIComponent(category)}`, { params, headers })
+      .pipe(catchError(err => throwError(() => err)));
   }
 }
