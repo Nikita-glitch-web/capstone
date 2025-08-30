@@ -5,6 +5,7 @@ import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 interface AuthResponse {
+  token(token: any): unknown;
   id: number;
   username: string;
   email: string;
