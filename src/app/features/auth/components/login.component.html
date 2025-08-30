@@ -1,6 +1,6 @@
 <div class="login-container">
-  <h1>Login</h1>
-  <form [formGroup]="loginForm" (ngSubmit)="submit()">
+  <h1 class="auth-title">Login here!</h1>
+  <form class="form" [formGroup]="loginForm" (ngSubmit)="submit()">
     <mat-form-field appearance="fill">
       <mat-label>Username</mat-label>
       <input matInput formControlName="username" type="text" />

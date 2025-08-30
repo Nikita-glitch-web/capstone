@@ -36,7 +36,8 @@ export const appRoutes: Routes = [
       {
         path: ':id',
         loadComponent: () =>
-          import('./features/items/pages/details.page').then(m => m.DetailsPage),
+          import('./features/items/components/details/details.component')
+            .then(m => m.DetailsComponent),
       },
     ],
   },

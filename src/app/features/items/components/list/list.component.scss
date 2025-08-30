@@ -1,0 +1,85 @@
+.items-toolbar {
+  background-color: var(--app-background);
+  color: var(--app-on-background);
+  display: flex;
+  gap: 16px;
+
+  .mat-form-field {
+    background-color: var(--app-background);
+
+    input {
+      color: var(--app-on-background);
+    }
+
+    .mat-form-field-label {
+      color: var(--app-on-background);
+    }
+  }
+
+  button {
+    color: var(--app-primary);
+  }
+}
+
+.items-table-container {
+  margin-top: 16px;
+
+  .mat-mdc-table {
+    background-color: var(--app-background);
+    color: var(--app-on-background);
+
+    .mat-mdc-header-row,
+    .mat-mdc-row {
+      background-color: var(--app-background);
+      color: var(--app-on-background);
+    }
+
+    .mat-mdc-cell,
+    .mat-mdc-header-cell {
+      color: var(--app-on-background);
+      background-color: var(--app-background);
+    }
+
+    .mat-mdc-row:nth-child(even) {
+      background-color: rgba(0, 0, 0, 0.03);
+    }
+  }
+
+  mat-paginator {
+    background-color: var(--app-background);
+    color: var(--app-on-background);
+
+    .mat-paginator-range-label,
+    .mat-paginator-page-size-label {
+      color: var(--app-on-background);
+    }
+  }
+
+  .mat-mdc-select-panel {
+    background-color: var(--app-background);
+    color: var(--app-on-background);
+  }
+
+  button.mat-icon-button {
+    color: var(--app-warn);
+  }
+}
+
+
+.add-product-btn {
+  background-color: #90A4AE !important; // зелена кнопка
+  color: #ffffff !important;            // текст білий
+}
+
+.add-product-btn:hover {
+  background-color: #B0BEC5 !important; // темніший зелений при ховері
+}
+
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}

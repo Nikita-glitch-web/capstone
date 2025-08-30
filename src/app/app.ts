@@ -1,15 +1,18 @@
-import { Component, OnInit, ViewChild, Renderer2, inject, PLATFORM_ID } from '@angular/core';
-import { MatSidenav } from '@angular/material/sidenav';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { isPlatformBrowser } from '@angular/common';
+import { Component, signal, computed, effect, inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule, RouterOutlet } from '@angular/router';
-import { MatToolbar } from "@angular/material/toolbar";
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatIconModule } from '@angular/material/icon';
-import { CommonModule } from '@angular/common';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { AuthService } from './features/auth/services/auth.service';
+
+interface NavButton {
+  label: string;
+  link?: string;
+  show: () => boolean;
+  action?: () => void;
+}
 
 @Component({
   selector: 'app-root',
@@ -18,69 +21,53 @@ import { AuthService } from './features/auth/services/auth.service';
     CommonModule,
     RouterModule,
     RouterOutlet,
-    MatToolbar,
+    MatToolbarModule,
     MatButtonModule,
-    MatSlideToggleModule,
-    MatSidenavModule,
     MatIconModule
   ],
   templateUrl: './app.html',
   styleUrls: ['./app.scss']
 })
-export class App implements OnInit {
-  @ViewChild('sidenav') sidenav!: MatSidenav;
+export class App {
+  currentTheme = signal<'light' | 'dark'>('light');
+  isDarkTheme = computed(() => this.currentTheme() === 'dark');
+  navButtons: NavButton[] = [];
 
-  isDarkTheme = false;
-  isMobile = false;
-
-  private renderer = inject(Renderer2);
-  private breakpointObserver = inject(BreakpointObserver);
   private platformId = inject(PLATFORM_ID);
+  private overlay = inject(OverlayContainer);
 
-  constructor(public auth: AuthService) {}
-
-  ngOnInit() {
+  constructor(public auth: AuthService) {
+    // Завантажуємо тему з localStorage (якщо браузер)
     if (isPlatformBrowser(this.platformId)) {
-      const savedTheme = localStorage.getItem('theme');
-      this.isDarkTheme = savedTheme === 'dark';
+      const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
+      this.currentTheme.set(saved ?? 'light');
     }
-    this.updateBodyClass();
 
-    this.breakpointObserver.observe([Breakpoints.Handset])
-      .subscribe(result => {
-        this.isMobile = result.matches;
-        if (!this.isMobile && this.sidenav) {
-          this.sidenav.open();
-        }
-      });
+    // Навігаційні кнопки
+    this.navButtons = [
+      { label: 'Items', link: '/items', show: () => this.auth.isLoggedIn() },
+      { label: 'Settings', link: '/settings', show: () => this.auth.isLoggedIn() },
+      { label: 'Login', link: '/auth/login', show: () => !this.auth.isLoggedIn() },
+      { label: 'Logout', show: () => this.auth.isLoggedIn(), action: () => this.auth.logout() }
+    ];
+
+    // Ефект для синхронізації теми
+    effect(() => {
+      const theme = this.currentTheme();
+
+      if (isPlatformBrowser(this.platformId)) {
+        localStorage.setItem('theme', theme);
+      }
+
+      // Встановлюємо тему на <html>
+      document.documentElement.setAttribute('data-theme', theme);
+
+      // Встановлюємо тему на overlay container (меню, діалоги)
+      this.overlay.getContainerElement().setAttribute('data-theme', theme);
+    });
   }
 
-  toggleTheme(isDark: boolean) {
-    this.isDarkTheme = isDark;
-
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    }
-
-    this.updateBodyClass();
-  }
-
-  closeSidenav() {
-    if (this.isMobile && this.sidenav) {
-      this.sidenav.close();
-    }
-  }
-
-  private updateBodyClass() {
-    if (!isPlatformBrowser(this.platformId)) return;
-
-    const body = document.body;
-    if (this.isDarkTheme) {
-      this.renderer.addClass(body, 'dark-theme');
-      this.renderer.removeClass(body, 'light-theme');
-    } else {
-      this.renderer.addClass(body, 'light-theme');
-      this.renderer.removeClass(body, 'dark-theme');
-    }
+  toggleTheme() {
+    this.currentTheme.set(this.currentTheme() === 'light' ? 'dark' : 'light');
   }
 }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { Observable, of, catchError, switchMap } from 'rxjs';
 import { ItemsService, Product } from '../../services/items';
 
 @Component({
@@ -10,10 +11,10 @@ import { ItemsService, Product } from '../../services/items';
   standalone: true,
   templateUrl: './details.component.html',
   styleUrls: ['./details.component.scss'],
-  imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule]
+  imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule],
 })
 export class DetailsComponent implements OnInit {
-  product!: Product;
+  product$!: Observable<Product | null>;
 
   constructor(
     private route: ActivatedRoute,
@@ -22,13 +23,21 @@ export class DetailsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const id = this.route.snapshot.params['id'];
-    if (id) {
-      this.itemsService.getProduct(+id).subscribe((p) => (this.product = p));
-    }
+    this.product$ = this.route.paramMap.pipe(
+      switchMap((params) => {
+        const id = params.get('id');
+        if (!id) return of(null);
+        return this.itemsService.getProduct(+id).pipe(
+          catchError((err) => {
+            console.error('Помилка завантаження продукту', err);
+            return of(null);
+          })
+        );
+      })
+    );
   }
 
   back() {
-    this.router.navigate(['/app/products']);
+    this.router.navigate(['/items/list']);
   }
 }

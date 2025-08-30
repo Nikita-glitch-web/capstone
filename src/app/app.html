@@ -1,36 +1,23 @@
-<mat-sidenav-container class="sidenav-container">
-  <mat-sidenav #sidenav mode="over" [opened]="false" *ngIf="isMobile" class="app-sidenav">
-    <nav>
-      <button mat-list-item routerLink="/items" *ngIf="auth.isLoggedIn()" (click)="closeSidenav()">Items</button>
-      <button mat-list-item routerLink="/settings" *ngIf="auth.isLoggedIn()" (click)="closeSidenav()">Settings</button>
-      <button mat-list-item routerLink="/auth/login" *ngIf="!auth.isLoggedIn()" (click)="closeSidenav()">Login</button>
-      <button mat-list-item (click)="auth.logout()" *ngIf="auth.isLoggedIn()" (click)="closeSidenav()">Logout</button>
-    </nav>
-  </mat-sidenav>
+<mat-toolbar>
+  <span class="app-title">Capstone</span>
+  <span class="spacer"></span>
 
-  <mat-sidenav-content>
-    <mat-toolbar color="primary">
-      <button *ngIf="isMobile" mat-icon-button (click)="sidenav.toggle()">
-        <mat-icon>menu</mat-icon>
-      </button>
+  <ng-container *ngFor="let btn of navButtons">
+    <button
+      mat-button
+      *ngIf="btn.show()"
+      [routerLink]="btn.link"
+      (click)="btn.action?.()"
+    >
+      {{ btn.label }}
+    </button>
+  </ng-container>
 
-      <span class="app-title">Capstone</span>
-      <span class="spacer"></span>
+  <button mat-icon-button (click)="toggleTheme()">
+    <mat-icon>{{ isDarkTheme() ? 'dark_mode' : 'light_mode' }}</mat-icon>
+  </button>
+</mat-toolbar>
 
-      <ng-container *ngIf="!isMobile">
-        <button mat-button routerLink="/items" *ngIf="auth.isLoggedIn()">Items</button>
-        <button mat-button routerLink="/settings" *ngIf="auth.isLoggedIn()">Settings</button>
-        <button mat-button routerLink="/auth/login" *ngIf="!auth.isLoggedIn()">Login</button>
-        <button mat-button (click)="auth.logout()" *ngIf="auth.isLoggedIn()">Logout</button>
-      </ng-container>
-
-      <mat-slide-toggle [checked]="isDarkTheme" (change)="toggleTheme($event.checked)">
-        Dark Mode
-      </mat-slide-toggle>
-    </mat-toolbar>
-
-    <div class="content">
-      <router-outlet></router-outlet>
-    </div>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+<div class="content">
+  <router-outlet></router-outlet>
+</div>

@@ -1,0 +1,30 @@
+/* theme-toggle.component.scss */
+.theme-toggle-btn {
+  width: 50px;
+  height: 26px;
+  border-radius: 13px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-surface);
+  color: var(--app-on-surface);
+  padding: 0;
+  transition: background 0.3s ease, color 0.3s ease;
+
+  .icon {
+    transition: transform 0.3s ease;
+    font-size: 16px;
+    line-height: 1;
+    user-select: none;
+
+    &.active {
+      transform: rotate(0deg);
+    }
+  }
+
+  &:hover {
+    opacity: 0.85;
+  }
+}

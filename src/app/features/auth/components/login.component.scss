@@ -6,3 +6,15 @@
   gap: 16px;
 
 }
+
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
+.auth-title {
+  text-align: center;
+}

@@ -1,18 +1,29 @@
-<mat-card *ngIf="product">
-  <mat-card-header>
-    <mat-card-title>{{ product.title }}</mat-card-title>
-    <mat-card-subtitle>{{ product.category }}</mat-card-subtitle>
-  </mat-card-header>
+<ng-container *ngIf="product$ | async as product; else loading">
+  <mat-card *ngIf="product; else notFound">
+    <mat-card-header>
+      <mat-card-title>{{ product.title }}</mat-card-title>
+      <mat-card-subtitle>{{ product.category }}</mat-card-subtitle>
+    </mat-card-header>
 
-  <img mat-card-image [src]="product.thumbnail" alt="{{ product.title }}">
+    <img style="width: 450px;" mat-card-image [src]="product.thumbnail" alt="{{ product.title }}" />
 
-  <mat-card-content>
-    <p><strong>Price:</strong> {{ product.price | currency }}</p>
-    <p><strong>Rating:</strong> {{ product.rating }}</p>
-    <p><strong>Stock:</strong> {{ product.stock }}</p>
-  </mat-card-content>
+    <mat-card-content>
+      <p><strong>Price:</strong> {{ product.price | currency }}</p>
+      <p><strong>Rating:</strong> {{ product.rating }}</p>
+      <p><strong>Stock:</strong> {{ product.stock }}</p>
+      <p *ngIf="product.description"><strong>Description:</strong> {{ product.description }}</p>
+    </mat-card-content>
 
-  <mat-card-actions>
-    <button mat-button color="primary" (click)="back()">Back</button>
-  </mat-card-actions>
-</mat-card>
+    <mat-card-actions>
+      <button mat-button color="primary" (click)="back()">Back</button>
+    </mat-card-actions>
+  </mat-card>
+</ng-container>
+
+<ng-template #loading>
+  <p>Loading product...</p>
+</ng-template>
+
+<ng-template #notFound>
+  <p>Product not found.</p>
+</ng-template>
